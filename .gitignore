@@ -1,1 +1,3 @@
 .idea
+.pytest_cache
+server/.pytest_cache
