@@ -1,1 +1,3 @@
 .idea
+.pytest_cache
+smtp_server/.pytest_cache
