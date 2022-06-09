@@ -6,15 +6,16 @@ services:
     image: redis
 
 
-  server:
-    build: ./server
+  smtp_server:
+    build: smtp_server
     volumes:
-      - ./server:/app
+      - ./smtp_server:/app
 
-    command:
-      - "[python, main.py]"
+    command: python main.py
     environment:
+      - DOMAIN=test
+      - TLD=com
       - SMTP_HOST=0.0.0.0
-      - SMTP_PORT=4467
+      - SMTP_PORT=8025
     depends_on:
       - database
