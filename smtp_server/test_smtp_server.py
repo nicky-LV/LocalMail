@@ -4,11 +4,13 @@ from smtplib import SMTPException
 import os
 import pytest
 
+from .main import controller
+
 
 @pytest.fixture
 def smtp():
     try:
-        engine = smtplib.SMTP(host=str(os.environ.get("SMTP_HOST")), port=int(os.environ.get("SMTP_PORT")))
+        engine = smtplib.SMTP(host=controller.hostname, port=controller.port)
         return engine
 
     except SMTPException as e:
@@ -21,8 +23,8 @@ def test_smtp_connection(smtp):
 
 
 def test_sending_email(smtp):
-    """ Test sending an email to SMTP server """
+    """ Test sending an email to SMTP smtp_server """
     email_msg = EmailMessage()
-    email_msg['To'] = f'example_to@{os.environ.get("SMTP_HOST")}:{os.environ.get("SMTP_PORT")}'
-    email_msg['From'] = f'example_from@{os.environ.get("SMTP_HOST")}:{os.environ.get("SMTP_PORT")}'
+    email_msg['To'] = f'example_to@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'
+    email_msg['From'] = f'example_from@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'
     smtp.send_message(email_msg)
