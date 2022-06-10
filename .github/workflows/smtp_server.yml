@@ -23,6 +23,12 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
-    - name: Install docker
-      run: |
-        docker -v
+    - name: docker-compose build
+      run: docker-compose -f docker-compose-dev.yml build
+
+    - name: docker-compose up
+      run: docker-compose -f docker-compose-dev.yml up
+
+    - name: test smtp_server container
+      run: docker-compose -f docker-compose-dev.yml exec smtp_server pytest
+
