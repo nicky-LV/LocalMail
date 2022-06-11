@@ -27,7 +27,7 @@ jobs:
       run: docker-compose -f docker-compose-dev.yml build
 
     - name: docker-compose up
-      run: docker-compose -f docker-compose-dev.yml up
+      run: docker-compose -f docker-compose-dev.yml up -d
 
     - name: test smtp_server container
       run: docker-compose -f docker-compose-dev.yml exec smtp_server pytest
