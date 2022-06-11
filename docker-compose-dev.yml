@@ -2,8 +2,16 @@ version: '3.3'
 
 services:
 
-  database:
-    image: redis
+  postgres:
+    image: postgres
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    ports:
+      - "5432"
+
+    environment:
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=gS30z4KIulSQ
 
 
   smtp_server:
@@ -11,11 +19,15 @@ services:
     volumes:
       - ./smtp_server:/app
 
-    command: python main.py
+    command: python -u main.py
     environment:
       - DOMAIN=test
       - TLD=com
       - SMTP_HOST=0.0.0.0
       - SMTP_PORT=8025
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=gS30z4KIulSQ
     depends_on:
-      - database
+      - postgres
