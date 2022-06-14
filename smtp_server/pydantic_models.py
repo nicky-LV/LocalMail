@@ -3,6 +3,9 @@ from typing import Optional, Type
 
 
 class PydanticUser(BaseModel):
+    class Config:
+        orm_mode = True
+
     id: int
     first_name: str
     surname: str
@@ -12,6 +15,9 @@ class PydanticUser(BaseModel):
 
 
 class PydanticEmail(BaseModel):
+    class Config:
+        orm_mode = True
+
     id: int
     subject: str
     sender: str
@@ -22,14 +28,14 @@ class PydanticEmail(BaseModel):
     users: Type
 
     @validator('subject')
-    def check_subject_length(self, v):
+    def check_subject_length(cls, v):
         if len(v) > 70:
             return ValidationError
 
         return v
 
     @validator('sender')
-    def check_sender_length(self, v):
+    def check_sender_length(cls, v):
         if len(v) > 320:
             return ValidationError
 
