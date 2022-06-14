@@ -2,6 +2,15 @@ version: '3.3'
 
 services:
 
+  test_postgres:
+    image: postgres
+    ports:
+      - "5432"
+
+    environment:
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=test
+
   postgres:
     image: postgres
     volumes:
@@ -26,8 +35,12 @@ services:
       - SMTP_HOST=0.0.0.0
       - SMTP_PORT=8025
       - DB_HOST=postgres
+      - TEST_DB_HOST=test_postgres
       - DB_PORT=5432
+      - TEST_DB_PORT=5432
       - POSTGRES_USERNAME=postgres
+      - TEST_POSTGRES_USERNAME=postgres
       - POSTGRES_PASSWORD=gS30z4KIulSQ
+      - TEST_POSTGRES_PASSWORD=test
     depends_on:
       - postgres
