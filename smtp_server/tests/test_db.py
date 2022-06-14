@@ -5,6 +5,7 @@ from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy.schema import MetaData
 from ..pydantic_models import *
 from ..db import *
+from ..utils import *
 
 
 @pytest.fixture
@@ -36,5 +37,6 @@ def test_users_table(sqlalchemy_base, sqlalchemy_engine, sqlalchemy_session):
     meta.create_all(bind=sqlalchemy_engine)
 
     # Create user
-    user: Users = Users(user_uid="test")
+    uuid = generate_uuid()
+    user: Users = Users(uuid=uuid)
 

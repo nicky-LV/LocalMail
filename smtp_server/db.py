@@ -2,6 +2,7 @@ import os
 from sqlalchemy.orm import declarative_base, relationship, Session
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.engine import create_engine
+from sqlalchemy.dialects.postgresql import UUID
 
 
 engine = create_engine(f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}",
@@ -13,9 +14,7 @@ session = Session(engine)
 
 class Users(Base):
     __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True)
-    user_uid = Column(String(512), nullable=False, unique=True)
+    uuid = Column(UUID(as_uuid=True), nullable=False, primary_key=True)
 
     # 1-to-1 relationship to Accounts table
     account = relationship('Accounts', back_populates='user', uselist=False)
@@ -31,7 +30,7 @@ class Accounts(Base):
 
     # Email address linked to account
     email_address = Column(String(320), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    user_id = Column(Integer, ForeignKey('users.uuid'), nullable=True)
     user = relationship('Users', back_populates='account')
 
 
@@ -51,7 +50,7 @@ class UserEmails(Base):
     __tablename__ = 'user_emails'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    user_id = Column(Integer, ForeignKey('users.uuid'))
     emails_id = Column(Integer, ForeignKey('emails.id'))
 
 
