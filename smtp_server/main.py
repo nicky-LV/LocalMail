@@ -2,23 +2,56 @@ import os
 import time
 from aiosmtpd.controller import Controller
 
+from sqlalchemy.exc import MultipleResultsFound
+
+from sqlalchemy import select
+from db import *
+from utils import get_subject_from_email, get_body_from_email
+
 
 class ExampleHandler:
     async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
         if not address.endswith(f'@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'):
             return '550 not relaying to that domain'
+
         envelope.rcpt_tos.append(address)
         return '250 OK'
 
-    async def handle_DATA(self, server, session, envelope):
-        print('Message from %s' % envelope.mail_from)
-        print('Message for %s' % envelope.rcpt_tos)
-        print(f'Content: {envelope.content}')
-        print('Message data:\n')
-        for ln in envelope.content.decode('utf8', errors='replace').splitlines():
-            print(f'> {ln}'.strip())
-        print()
-        print('End of message')
+    async def handle_DATA(self, server, session_, envelope):
+        # Check which recipients actually exist.
+        existing_recipients = []
+
+        # Extract subject from email
+        assert type(envelope.content) == bytes
+        subject = get_subject_from_email(envelope.content.decode('utf8'))
+        body = get_body_from_email(envelope.content.decode('utf8'))
+
+        email: Emails = Emails(sender=envelope.mail_from, body=body,
+                               subject=subject, retrieved=False)
+
+        for rcpt_address in envelope.rcpt_tos:
+            try:
+                recipient = session.query(Users).filter(Users.email_address == str(rcpt_address)).scalar()
+
+                if recipient and recipient not in existing_recipients:
+                    existing_recipients.append(recipient)
+                    email.users.append(recipient)
+
+            except MultipleResultsFound:
+                # Multiple users exist with the same email. Remove users with duplicate emails.
+                pass
+
+            # If recipients exist, save the email. It will be linked to the recipients' accounts.
+            if existing_recipients:
+                session.add(email)
+                session.commit()
+
+                return '250 OK'
+
+            # User doesn't exist, reject incoming email.
+            else:
+                return '541'
+
         return '250 Message accepted for delivery'
 
 

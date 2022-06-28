@@ -28,7 +28,7 @@ services:
     volumes:
       - ./smtp_server:/app
 
-    command: python -u main.py
+    command: bash -c "python -u db.py && python -u main.py"
     environment:
       - DOMAIN=test
       - TLD=com
@@ -42,5 +42,6 @@ services:
       - TEST_POSTGRES_USERNAME=postgres
       - POSTGRES_PASSWORD=gS30z4KIulSQ
       - TEST_POSTGRES_PASSWORD=test
+      - TEST_DB=1
     depends_on:
       - postgres
