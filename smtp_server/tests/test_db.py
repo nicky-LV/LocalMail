@@ -43,8 +43,8 @@ def test_users_table():
                         "Remove users with the same email address and try again.")
 
 
-def test_email_crud():
-    """ Tests CRUD operations on "emails" table. """
+def test_user_email_relationship():
+    """ Tests Users and Emails relationship / cascade works as intended. """
 
     # Wipe existing test users
     wipe_test_users()
@@ -53,36 +53,71 @@ def test_email_crud():
     test_user_1: Users = Users(uuid=generate_uuid(), email_address="test@test.com")
     test_user_2: Users = Users(uuid=generate_uuid(), email_address="test2@test.com")
     test_user_3: Users = Users(uuid=generate_uuid(), email_address="test3@test.com")
-    session.add(test_user_1)
-    session.add(test_user_2)
-    session.add(test_user_3)
 
-    # Create test email
-    test_email: Emails = Emails(subject="Test", sender=test_user_1.email_address,
-                                body="Test message")
+    test_users = [test_user_1, test_user_2, test_user_3]
 
-    # Populate relationship
-    test_email.users.append(test_user_1)
-    test_email.users.append(test_user_2)
-    test_email.users.append(test_user_3)
+    # Add users to session.
+    for user in test_users:
+        session.add(user)
 
-    session.add(test_email)
+    # Create test emails
+    email_1: Emails = Emails(subject="test_email_1", sender=test_user_1.email_address,
+                                body="test_email_1")
+
+    email_2: Emails = Emails(subject="test_email_2", sender=test_user_1.email_address,
+                                body="test_email_2")
+
+    test_emails = [email_1, email_2]
+
+    # Populate 'users' relationship for emails
+    for email in test_emails:
+        for user in test_users:
+            email.users.append(user)
+
+    # Add emails to session
+    for email in test_emails:
+        session.add(email)
+
+    # Commit session
     session.commit()
 
-    q = session.query(Emails).filter(Emails.id == test_email.id).scalar()
+    q1 = session.query(Emails).filter(Emails.id == email_1.id).scalar()
+    q2 = session.query(Emails).filter(Emails.id == email_2.id).scalar()
 
-    # Assert row exists.
-    assert q is not None
+    # Assert emails exist
+    assert q1 is not None
+    assert q2 is not None
 
-    # Assert relationships work correctly. (Senders/recipients are linked to the email)
-    assert test_user_1 in q.users
-    assert test_user_2 in q.users
-    assert test_user_3 in q.users
+    # Assert that the emails are related to the user
+    for email in test_emails:
+        for user in test_users:
+            assert email in user.emails
 
-    # Assert that the emails are related to the users.
-    assert q in test_user_1.emails
-    assert q in test_user_2.emails
-    assert q in test_user_3.emails
+    # Assert that the users are back-related to the email.
+    for user in test_users:
+        assert user in q1.users
+        assert user in q2.users
+
+    # Delete the first email.
+    session.delete(q1)
+    session.commit()
+
+    # Assert the cascades (from a related emails' deletion) works correctly.
+    for user in test_users:
+        # Assert user still exists
+        assert session.query(Users).filter(Users.uuid == user.uuid).scalar() is not None
+        # Assert that the email is unlinked from the user.
+        assert q2 in user.emails
+        assert q1 not in user.emails
+
+    # Delete the users - assert that the cascade works correctly.
+    wipe_test_users()
+
+    # Assert that q2 has no related users and that it still exists.
+    assert q2.users == []
+    assert q2 is not None
+
+
 
 
 

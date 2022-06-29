@@ -1,10 +1,5 @@
-import os
-import time
 from aiosmtpd.controller import Controller
-
 from sqlalchemy.exc import MultipleResultsFound
-
-from sqlalchemy import select
 from db import *
 from utils import get_subject_from_email, get_body_from_email
 
@@ -41,18 +36,16 @@ class ExampleHandler:
                 # Multiple users exist with the same email. Remove users with duplicate emails.
                 pass
 
-            # If recipients exist, save the email. It will be linked to the recipients' accounts.
-            if existing_recipients:
-                session.add(email)
-                session.commit()
+        # If recipients exist, save the email. It will be linked to the recipients' accounts.
+        if existing_recipients:
+            session.add(email)
+            session.commit()
 
-                return '250 OK'
+            return '250 Message accepted for delivery'
 
-            # User doesn't exist, reject incoming email.
-            else:
-                return '541'
-
-        return '250 Message accepted for delivery'
+        # No valid recipients exist, so accept the message but do nothing with it.
+        else:
+            return '250 Message accepted for delivery'
 
 
 controller = Controller(ExampleHandler(), hostname=os.environ.get('SMTP_HOST'), port=int(os.environ.get('SMTP_PORT')))
