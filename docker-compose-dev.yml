@@ -22,6 +22,16 @@ services:
       - POSTGRES_USERNAME=postgres
       - POSTGRES_PASSWORD=gS30z4KIulSQ
 
+  frontend:
+    build: ./frontend
+
+    volumes:
+      - ./frontend:/app
+
+    command: bash -c "npm run dev"
+
+    ports:
+      - "3000:3000"
 
   smtp_server:
     build: smtp_server
