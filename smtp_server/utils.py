@@ -1,10 +1,7 @@
 import uuid
 from email.message import EmailMessage
 from db import *
-
-
-def generate_uuid():
-    return uuid.uuid4()
+from passlib.hash import sha256_crypt
 
 
 def get_subject_from_email(email_content: str):
@@ -51,12 +48,4 @@ def email_to_string(email: EmailMessage):
     """ ONLY FOR EmailMessage INSTANCES. Returns content of email as utf8 string. """
     assert isinstance(email, EmailMessage)
     return str(email.as_bytes().decode('utf8'))
-
-
-def wipe_test_users():
-    """ Removes all users with an email_address prefixed with "test" """
-    for user in session.query(Users).all():
-        if user.email_address.startswith("test"):
-            session.delete(user)
-    session.commit()
 

@@ -2,8 +2,10 @@ from aiosmtpd.controller import Controller
 from sqlalchemy.exc import MultipleResultsFound
 from db import *
 from utils import get_subject_from_email, get_body_from_email
+import os
 
 
+# todo: update requirements.txt with ONLY the dependencies that this service needs.
 class ExampleHandler:
     async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
         if not address.endswith(f'@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'):
@@ -21,31 +23,9 @@ class ExampleHandler:
         subject = get_subject_from_email(envelope.content.decode('utf8'))
         body = get_body_from_email(envelope.content.decode('utf8'))
 
-        email: Emails = Emails(sender=envelope.mail_from, body=body,
-                               subject=subject, retrieved=False)
+        # todo: save email for any valid recipients
 
-        for rcpt_address in envelope.rcpt_tos:
-            try:
-                recipient = session.query(Users).filter(Users.email_address == str(rcpt_address)).scalar()
-
-                if recipient and recipient not in existing_recipients:
-                    existing_recipients.append(recipient)
-                    email.users.append(recipient)
-
-            except MultipleResultsFound:
-                # Multiple users exist with the same email. Remove users with duplicate emails.
-                pass
-
-        # If recipients exist, save the email. It will be linked to the recipients' accounts.
-        if existing_recipients:
-            session.add(email)
-            session.commit()
-
-            return '250 Message accepted for delivery'
-
-        # No valid recipients exist, so accept the message but do nothing with it.
-        else:
-            return '250 Message accepted for delivery'
+        return '250 Message accepted for delivery'
 
 
 controller = Controller(ExampleHandler(), hostname=os.environ.get('SMTP_HOST'), port=int(os.environ.get('SMTP_PORT')))

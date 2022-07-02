@@ -1,26 +1,27 @@
 export default function Login(props: object){
+
+  function onSubmit(){
+    // Validate input and submit to API
+    const email_addr: string = document.getElementById("email").value
+    const password: string = document.getElementById("password").value
+
+  }
     return (
-
     <>
-      {/*
-        This example requires updating your template:
-
-        ```
-        <html class="h-full bg-gray-50">
-        <body class="h-full">
-        ```
-      */}
       <div className="h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex flex-row justify-center w-full">
             Logo
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <form className="space-y-6" action="#" method="POST">
+            <form className="space-y-6" action="#" method="POST" onSubmit={(e) => {
+              e.preventDefault()
+              onSubmit()
+            }}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email address
@@ -65,12 +66,6 @@ export default function Login(props: object){
                     Remember me
                   </label>
                 </div>
-
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600">
-                    Forgot your password?
-                  </a>
-                </div>
               </div>
 
               <div>
@@ -78,7 +73,7 @@ export default function Login(props: object){
                   type="submit"
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  Sign in
+                  Sign up
                 </button>
               </div>
             </form>
