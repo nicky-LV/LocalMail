@@ -64,7 +64,7 @@ services:
     volumes:
       - ./smtp_server:/app
 
-    command: bash -c "python -u db.py && python -u main.py"
+    command: bash -c "python -u main.py"
     environment:
       - DOMAIN=test
       - TLD=com

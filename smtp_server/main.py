@@ -1,30 +1,40 @@
 from aiosmtpd.controller import Controller
 from sqlalchemy.exc import MultipleResultsFound
-from db import *
 from utils import get_subject_from_email, get_body_from_email
 import os
+import requests
+import json
 
 
 # todo: update requirements.txt with ONLY the dependencies that this service needs.
 class ExampleHandler:
+    def __init__(self):
+        self.sender = None
+        super().__init__()
+
     async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
         if not address.endswith(f'@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'):
             return '550 not relaying to that domain'
 
         envelope.rcpt_tos.append(address)
+        self.sender = address
         return '250 OK'
 
     async def handle_DATA(self, server, session_, envelope):
-        # Check which recipients actually exist.
-        existing_recipients = []
-
-        # Extract subject from email
-        assert type(envelope.content) == bytes
         subject = get_subject_from_email(envelope.content.decode('utf8'))
         body = get_body_from_email(envelope.content.decode('utf8'))
+        recipients = envelope.rcpt_tos
 
-        # todo: save email for any valid recipients
+        response = requests.post(url=f'http://api:8000/saveEmail', json={
+            'subject': subject,
+            'body': body,
+            'recipients': recipients,
+            'sender': self.sender
+        }, headers={
+            'Content-Type': 'application/json'
+        })
 
+        assert response.status_code == 200
         return '250 Message accepted for delivery'
 
 

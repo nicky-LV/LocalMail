@@ -1,7 +1,4 @@
-import uuid
 from email.message import EmailMessage
-from db import *
-from passlib.hash import sha256_crypt
 
 
 def get_subject_from_email(email_content: str):
