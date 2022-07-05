@@ -13,7 +13,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
     allow_credentials=True,
-    allow_methods=['*'],
+    allow_methods=['GET', 'POST', 'OPTIONS'],
     allow_headers=['*'],
 )
 
@@ -41,7 +41,7 @@ def signup(response: Response, user: SignUpUser):
             session.commit()
 
             # return JWT token
-            jwt_token: str = create_access_token(data={
+            access_token: str = create_access_token(data={
                 'sub': db_user.uuid.hex
             }, expires_delta=timedelta(days=1))
 
@@ -51,17 +51,17 @@ def signup(response: Response, user: SignUpUser):
             }, expires_delta=timedelta(days=7))
 
             # Set-Cookie header in response
-            response.set_cookie(key='access_token', value=jwt_token)
+            response.set_cookie(key='access_token', value=access_token)
             response.set_cookie(key='refresh_token', value=refresh_token)
             return {
                 'uuid': db_user.uuid.hex,
-                'access_token': jwt_token,
+                'access_token': access_token,
                 'refresh_token': refresh_token
             }
 
 
 @app.post('/login')
-def login(user: SignUpUser):
+def login(user: SignUpUser, response: Response):
     """
     :param user - requires "email_address" and "password" in the request body (JSON).
     """
@@ -74,7 +74,7 @@ def login(user: SignUpUser):
             # Check passwords match
             if verify_password(user.password, db_user.password):
                 # Generates access token and refresh token
-                jwt_token: str = create_access_token(data={
+                access_token: str = create_access_token(data={
                     'sub': db_user.uuid.hex
                 }, expires_delta=timedelta(days=1))
 
@@ -83,9 +83,13 @@ def login(user: SignUpUser):
                     'sub': db_user.uuid.hex
                 }, expires_delta=timedelta(days=7))
 
+                # Set-Cookie header in response
+                response.set_cookie(key='access_token', value=access_token)
+                response.set_cookie(key='refresh_token', value=refresh_token)
+
                 return {
                     'uuid': db_user.uuid.hex,
-                    'access_token': jwt_token,
+                    'access_token': access_token,
                     'refresh_token': refresh_token
                 }
 

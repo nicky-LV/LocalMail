@@ -67,6 +67,9 @@ def test_login_valid_credentials(test_user):
     })
 
     assert response.status_code == 200
+    assert response.json()['uuid'] is not None
+    assert response.json()['access_token'] is not None
+    assert response.json()['refresh_token'] is not None
 
 
 def test_login_invalid_credentials(test_user):
