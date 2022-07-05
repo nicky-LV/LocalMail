@@ -2,6 +2,7 @@ import json
 import random
 import string
 import os
+import time
 from datetime import datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
@@ -27,6 +28,21 @@ def test_user():
             session.commit()
 
             return session.query(Users).filter(Users.email_address == 'test@test.com').scalar()
+
+
+@pytest.fixture
+def test_AT(test_user):
+    """ Access token for test user"""
+    return create_access_token(data={
+        'sub': test_user.uuid
+    }, expires_delta=timedelta(minutes=1))
+
+@pytest.fixture
+def test_RT(test_user):
+    """ Refresh token for test user"""
+    return create_access_token(data={
+        'sub': test_user.uuid
+    }, expires_delta=timedelta(minutes=5))
 
 
 def test_signup_valid_credentials():
@@ -88,3 +104,13 @@ def test_login_invalid_credentials(test_user):
 
     assert response.status_code == 400
     assert response.content == b'Email or password is invalid'
+
+
+def test_get_emails(test_user, test_AT, test_RT):
+    response = client.get(f'/getEmails/{test_user.uuid}', headers={
+        'Authorization': f'Bearer {test_AT}',
+        'refresh_token': test_RT
+    })
+
+    assert response.status_code == 200
+    assert type(response.json()) == list

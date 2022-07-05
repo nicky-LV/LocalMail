@@ -4,7 +4,6 @@ import smtplib
 from smtplib import SMTPException
 from email.message import EmailMessage
 from ..main import controller
-from ..pydantic_models import *
 from ..utils import *
 
 
