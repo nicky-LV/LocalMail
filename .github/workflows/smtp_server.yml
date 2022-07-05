@@ -29,6 +29,9 @@ jobs:
     - name: docker-compose up
       run: docker-compose -f docker-compose-dev.yml up -d
 
-    - name: test smtp_server container
+    - name: test smtp_server microservice
       run: docker-compose -f docker-compose-dev.yml exec -T smtp_server pytest
+
+    - name: test api microservice
+      run: docker-compose -f docker-compose-dev.yml exec -T api pytest
 

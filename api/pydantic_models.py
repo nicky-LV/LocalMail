@@ -25,7 +25,7 @@ class Email(BaseModel):
     body: str | None
     recipients: List[str]
     sender: str
-    datetime: str
+    datetime: str | None
 
     class Config:
         orm_mode = True
