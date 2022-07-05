@@ -1,7 +1,11 @@
-export default function HeaderLogo(){
+export default function HeaderLogo(props: any){
     return (
-        <div id="headerLogo" className="bg-blue-200 h-24 flex flex-row items-center p-6">
-            <div id="Logo" className="w-32 h-16 bg-red">Logo</div>
+        <div id="headerLogo" className="bg-white border-b h-20 flex flex-row items-center px-16">
+                <div id="Logo" className="bg-red">Logo</div>
+            {props.children && <div id='buttons-container' className="w-full flex flex-row justify-end gap-6">
+                {/* Buttons */}
+                {props.children}
+            </div>}
         </div>
     )
 }
