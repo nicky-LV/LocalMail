@@ -24,13 +24,13 @@ else:
 
 class Users(Base):
     __tablename__ = 'users'
-    uuid = Column(UUID(as_uuid=True), nullable=False, primary_key=True)
+    uuid = Column(UUID(as_uuid=False), nullable=False, primary_key=True)
     email_address = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     disabled = Column(Boolean, nullable=False, default=False)
 
     # M2M relationship to emails table
-    emails = relationship('Emails', secondary='user_emails', back_populates='users')
+    emails = relationship('Emails', secondary='user_emails', back_populates='recipients')
 
     def __repr__(self):
         return f"User {self.uuid}: {self.email_address}"
@@ -46,7 +46,7 @@ class Emails(Base):
     retrieved = Column(Boolean, nullable=False, default=False)
     datetime = Column(DateTime, nullable=False, default=datetime.datetime.utcnow())
 
-    users = relationship('Users', secondary='user_emails', back_populates='emails')
+    recipients = relationship('Users', secondary='user_emails', back_populates='emails')
 
     def __repr__(self):
         return f"ID: {self.id} | Subject: {self.subject}"
@@ -56,7 +56,7 @@ class UserEmails(Base):
     __tablename__ = 'user_emails'
 
     id = Column(Integer, primary_key=True)
-    user_uuid = Column(UUID, ForeignKey('users.uuid'))
+    user_uuid = Column(UUID(as_uuid=False), ForeignKey('users.uuid'))
     emails_id = Column(Integer, ForeignKey('emails.id'))
 
 
