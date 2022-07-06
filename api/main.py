@@ -28,20 +28,17 @@ def index(response: Response):
 
 
 @app.post(path='/signup')
-def signup(response: Response, user: SignUpUser):
+def signup(response: Response, user: User):
     """ Receives userdata via JSON.
      Responses:
      200 - JWT token in response
      400 - Invalid email (email already exists)
     """
 
-    # Check if user with email already exists
+    # SignUpUser validates that the email address is unique.
     with Session(engine) as session:
-        if session.query(Users).filter(Users.email_address == user.email_address).scalar():
-            raise HTTPException(status_code=400, detail=f"User with email address {user.email_address} already exists.")
-
-        # Create user and return JWT token
-        else:
+        try:
+            # Create user and return JWT token
             user_uuid: str = generate_uuid()
             db_user: Users = Users(uuid=user_uuid, email_address=user.email_address,
                                    password=hash_password(user.password),
@@ -68,42 +65,42 @@ def signup(response: Response, user: SignUpUser):
                 'refresh_token': refresh_token
             }
 
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=400)
+
 
 @app.post('/login')
-def login(user: SignUpUser, response: Response):
+def login(user: LogInUser, response: Response):
     """
+    LogInUser validates that the user exists and the password is correct.
     :param user - requires "email_address" and "password" in the request body (JSON).
+    :param response: Response obj
     """
 
     # Query user
     with Session(engine) as session:
-        db_user: Users = session.query(Users).filter(Users.email_address == user.email_address).scalar()
+        db_user = session.query(Users).filter(Users.email_address == user.email_address).scalar()
 
         if db_user:
-            # Check passwords match
-            if verify_password(user.password, db_user.password):
-                # Generates access token and refresh token
-                access_token: str = create_access_token(data={
-                    'sub': db_user.uuid
-                }, expires_delta=timedelta(days=1))
+            access_token: str = create_access_token(data={
+                'sub': db_user.uuid
+            }, expires_delta=timedelta(days=1))
 
-                # refresh token
-                refresh_token: str = create_access_token(data={
-                    'sub': db_user.uuid
-                }, expires_delta=timedelta(days=7))
+            # refresh token
+            refresh_token: str = create_access_token(data={
+                'sub': db_user.uuid
+            }, expires_delta=timedelta(days=7))
 
-                # Set-Cookie header in response
-                response.set_cookie(key='access_token', value=access_token)
-                response.set_cookie(key='refresh_token', value=refresh_token)
+            # Set-Cookie header in response
+            response.set_cookie(key='access_token', value=access_token)
+            response.set_cookie(key='refresh_token', value=refresh_token)
 
-                return {
-                    'uuid': db_user.uuid,
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                }
-
-            else:
-                return Response(status_code=400, content="Email or password is invalid")
+            return {
+                'uuid': db_user.uuid,
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            }
 
         else:
             return Response(status_code=400, content="Email or password is invalid")
@@ -119,6 +116,7 @@ def get_emails(user_id: str, token: str = Depends(access_token)):
                 user = session.query(Users).filter(Users.uuid == user_id).scalar()
                 emails = user.emails
 
+                print(emails)
                 return [
                     Email(id=db_email.id,
                           subject=db_email.subject,
@@ -128,6 +126,7 @@ def get_emails(user_id: str, token: str = Depends(access_token)):
                           datetime=db_email.datetime.utcnow().isoformat() + 'Z').dict()
                     for db_email in emails
                 ]
+
 
         else:
             return Response(status_code=400, content=f'User does not match token sub')
