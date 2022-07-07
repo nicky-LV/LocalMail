@@ -19,26 +19,20 @@ def get_subject_from_email(email_content: str):
     return None
 
 
-def get_body_from_email(email_content: str):
+def get_body_from_email(email_content: str) -> str:
     assert type(email_content) == str
 
     body_found = False
-    body = ""
-    for line in email_content.splitlines():
-        line = line.strip()
+    body = ''
 
-        if body_found:
+    for line in email_content.splitlines():
+        if not body_found and line == '':
+            body_found = True
+
+        elif body_found:
             body += f"{line}\n"
 
-        else:
-            if line == "\n":
-                body_found = True
-
-    if body == "":
-        return None
-
-    else:
-        return body
+    return body.strip('\n')
 
 
 def email_to_string(email: EmailMessage):
