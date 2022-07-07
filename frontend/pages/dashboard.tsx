@@ -2,41 +2,52 @@ import HeaderLogo from "../components/header_with_logo";
 import InboxHeader from "../components/dashboard/inboxHeader";
 import Folders from "../components/dashboard/folders";
 import ListEmails from "../components/dashboard/listEmails";
-import {useState} from "react";
-import {FolderName} from "../types";
-
-const emails = [
-    {
-        id: 1,
-        subject: "Test subject",
-        body: "Test body",
-        sender: "this@test.com",
-        recipients: [
-            {
-                uuid: "test_uuid",
-                email_address: "test_email_address"
-            }
-        ],
-        datetime: "datetime"
-    },
-    {
-        id: 2,
-        subject: "Test subject",
-        body: "Test body",
-        sender: "this@test.com",
-        recipients: [
-            {
-                uuid: "test_uuid",
-                email_address: "test_email_address"
-            }
-        ],
-        datetime: "datetime"
-    }
-]
+import {useEffect, useLayoutEffect, useState} from "react";
+import {DashboardError, Email, FolderName} from "../types";
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import Router from "next/router";
+import EmailPanel from "../components/dashboard/emailPanel";
 
 export default function Dashboard(){
     const [selectedFolder, setSelectedFolder] = useState<FolderName>(FolderName.INBOX);
-    const [selectedEmail, setSelectedEmail] = useState<number | null>(null);
+    const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+
+    const [emails, setEmails] = useState<Email[] | null>(null)
+    const [dashboardError, setDashboardError] = useState<DashboardError | null>(null)
+
+    useLayoutEffect(() => {
+        if (Cookies.get('uuid') && Cookies.get('access_token') && Cookies.get('refresh_token')){
+            const {uuid, access_token, refresh_token} = Cookies.get()
+
+            axios.get(`${process.env.NEXT_PUBLIC_API_SCHEME}://${process.env.NEXT_PUBLIC_API_DOMAIN}:${process.env.NEXT_PUBLIC_API_PORT}/getEmails/${uuid}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        refresh_token: `${refresh_token}`,
+                        uuid: `${uuid}`
+                    }
+                })
+                .then(response => {
+                    if (response.status == 200){
+                        console.log(response.data)
+                        const emails: Email[] = response.data
+                        console.log(emails)
+                        setEmails(emails)
+                    }
+                }).catch(error => {
+                if (error.response.status == 400){
+                    // todo: handle error
+                }
+            })
+        }
+
+        // Return to login page if cookies are not present
+        else {
+            Router.push('/login')
+        }
+
+    }, [])
 
     return (
         <div className="sm:min-h-screen bg-gray-100">
@@ -51,7 +62,7 @@ export default function Dashboard(){
             sm:rounded-tr-lg md:border md:shadow-md">
                 <InboxHeader />
 
-                {/* 3-column collapsible grid */}
+                {/* 6-column collapsible grid */}
                 <div className="grid grid-cols-6 h-full divide-x">
                     <div className="col-span-1 h-full">
                         <Folders
@@ -59,14 +70,19 @@ export default function Dashboard(){
                             selectedFolder={selectedFolder}
                         />
                     </div>
-                    
+
+                    {/* List emails */}
                     <div className="col-span-2 h-full">
-                        <ListEmails
+                        {emails != null && <ListEmails
                             folder={selectedFolder}
                             emails={emails}
-                            setSelectedEmail={(emailId: number) => setSelectedEmail(emailId)}
-                        />
+                            setSelectedEmail={(email: Email) => setSelectedEmail(email)}
+                        />}
+                    </div>
 
+                    {/* Email panel */}
+                    <div className="col-span-3 h-full">
+                        {selectedEmail != null && <EmailPanel email={selectedEmail} />}
                     </div>
                 </div>
             </div>
