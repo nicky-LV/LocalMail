@@ -45,3 +45,15 @@ def test_sending_email_w_subject(smtp):
     # A response of {} indicates the SMTP server responded with '250 OK' (success).
     assert response == {}
 
+
+def test_send_mail_body(smtp):
+    email = EmailMessage()
+    email['To'] = f'test@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'
+    email['From'] = f'test@{os.environ.get("DOMAIN")}.{os.environ.get("TLD")}'
+    email['Subject'] = 'Email with body'
+    # Set body
+    email.set_content(f"This is the body of the email. MIME-type of email: {email.get_content_type()}")
+
+    assert get_body_from_email(email.as_string()) == f"This is the body of the email. MIME-type of email: {email.get_content_type()}"
+    response = smtp.send_message(email)
+    assert response == {}
