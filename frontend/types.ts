@@ -26,8 +26,30 @@ export interface Email {
     id: number,
     subject: string,
     sender: string,
-    recipients: User[]
-    body: any,
+    recipients: string[]
+    body: string,
     datetime: string
 }
 
+export enum LoginField {
+    EMAIL = "email",
+    PASSWORD = "password"
+}
+
+export interface LoginErrors {
+    detail: {
+        field: LoginField
+        message: string
+    }
+}
+
+export enum DashboardErrorType {
+    ERROR_RETRIEVING_EMAILS
+}
+
+export interface DashboardError {
+    detail: {
+        error: DashboardErrorType,
+        message: string
+    }
+}
