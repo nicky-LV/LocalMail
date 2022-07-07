@@ -3,10 +3,8 @@ from sqlalchemy.exc import MultipleResultsFound
 from utils import get_subject_from_email, get_body_from_email
 import os
 import requests
-import json
 
 
-# todo: update requirements.txt with ONLY the dependencies that this service needs.
 class ExampleHandler:
     def __init__(self):
         self.sender = None

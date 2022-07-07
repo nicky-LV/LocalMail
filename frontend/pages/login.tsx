@@ -1,9 +1,11 @@
 import axios from 'axios';
 import Router from "next/router";
-import {LoggedInUser} from "../types";
-import Cookie from 'js-cookie';
+import {LoggedInUser, LoginErrors, LoginField} from "../types";
+import Cookies from 'js-cookie';
+import {useState} from "react";
 
 export default function Login(props: object){
+  const [loginError, setLoginError] = useState<LoginErrors | null>(null);
 
   function handleSubmit(){
     const email_address: string = document.getElementById('email').value
@@ -16,12 +18,16 @@ export default function Login(props: object){
       if (response.status == 200){
         // User has successfully logged in, save cookies.
         const data: LoggedInUser = response.data
-        Cookie.set('uuid', data.uuid)
-        Cookie.set('access_token', data.access_token)
-        Cookie.set('refresh_token', data.refresh_token)
+        Cookies.set('uuid', data.uuid)
+        Cookies.set('access_token', data.access_token)
+        Cookies.set('refresh_token', data.refresh_token)
 
         // Refresh to dashboard
         Router.push('/dashboard')
+      }
+    }).catch(e => {
+      if (e.response.status === 400){
+        setLoginError(e.response.data)
       }
     })
   }
@@ -42,6 +48,8 @@ export default function Login(props: object){
                 e.preventDefault()
                 handleSubmit()
               }}>
+
+                {/* Email input */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                     Email address
@@ -56,8 +64,14 @@ export default function Login(props: object){
                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
+
+                  {/* Email field errors */}
+                  {loginError && loginError.detail.field === LoginField.EMAIL && <p className="text-sm mt-2 text-red-600">
+                    {loginError.detail.message}
+                  </p>}
                 </div>
 
+                {/* Password field */}
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                     Password
@@ -72,6 +86,10 @@ export default function Login(props: object){
                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
+
+                  {loginError && loginError.detail.field === LoginField.PASSWORD && <p className="text-sm mt-2 text-red-600">
+                    {loginError.detail.message}
+                  </p>}
                 </div>
 
                 <div className="flex items-center justify-between">
