@@ -95,7 +95,12 @@ def test_login_invalid_credentials(test_user):
     })
 
     assert response.status_code == 400
-    assert response.content == b'Email or password is invalid'
+    assert response.json() == {
+        "detail": {
+            "field": "password",
+            "message": "Password is incorrect."
+        }
+    }
 
     response = client.post('/login', json={
         'email_address': f'falsetest@{os.environ["DOMAIN"]}.{os.environ["TLD"]}',
@@ -103,7 +108,12 @@ def test_login_invalid_credentials(test_user):
     })
 
     assert response.status_code == 400
-    assert response.content == b'Email or password is invalid'
+    assert response.json() == {
+        'detail': {
+            'field': 'email',
+            'message': 'No user exists with given email address.'
+        }
+    }
 
 
 def test_get_emails(test_user, test_AT, test_RT):

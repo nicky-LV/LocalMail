@@ -5,9 +5,10 @@ import jose
 from jose.exceptions import ExpiredSignatureError
 from passlib.hash import sha256_crypt
 from sqlalchemy.orm import Session
-from db import engine, Users
+from db import engine, Users, Emails
 from fastapi import Depends, Request, HTTPException
 from fastapi.security import HTTPBearer
+from typing import List
 
 security = HTTPBearer()
 
@@ -114,5 +115,10 @@ def refresh_access_token(access_token: str, refresh_token: str):
         return access_token
 
 
+def delete_emails(email_ids: List[int]) -> None:
+    with Session(engine) as session:
+        for email_id in email_ids:
+            db_email = session.query(Emails).filter(Emails.id == email_id).scalar()
+            session.delete(db_email)
 
-
+        session.commit()
