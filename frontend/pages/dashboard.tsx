@@ -8,13 +8,12 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import Router from "next/router";
 import EmailPanel from "../components/dashboard/emailPanel";
+import {updateFolderEmails, getFolderEmails} from "../utils";
 
 export default function Dashboard(){
     const [selectedFolder, setSelectedFolder] = useState<FolderName>(FolderName.INBOX);
     const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-
-    const [emails, setEmails] = useState<Email[] | null>(null)
-    const [dashboardError, setDashboardError] = useState<DashboardError | null>(null)
+    const [updateNum, setUpdateNum] = useState<number>(0);
 
     useLayoutEffect(() => {
         if (Cookies.get('uuid') && Cookies.get('access_token') && Cookies.get('refresh_token')){
@@ -30,15 +29,11 @@ export default function Dashboard(){
                 })
                 .then(response => {
                     if (response.status == 200){
-                        console.log(response.data)
-                        const emails: Email[] = response.data
-                        console.log(emails)
-                        setEmails(emails)
+                        updateFolderEmails(uuid, response.data, selectedFolder);
+                        setUpdateNum((prevState) => prevState + 1)
                     }
                 }).catch(error => {
-                if (error.response.status == 400){
-                    // todo: handle error
-                }
+                console.log(error)
             })
         }
 
@@ -68,21 +63,29 @@ export default function Dashboard(){
                         <Folders
                             setSelectedFolder={(folder: FolderName) => setSelectedFolder(folder)}
                             selectedFolder={selectedFolder}
+                            clearSelectedEmail={() => setSelectedEmail(null)}
                         />
                     </div>
 
                     {/* List emails */}
                     <div className="col-span-2 h-full">
-                        {emails != null && <ListEmails
+                        <ListEmails
+                            key={selectedFolder + updateNum.toString()}
                             folder={selectedFolder}
-                            emails={emails}
+                            uuid={Cookies.get('uuid')}
                             setSelectedEmail={(email: Email) => setSelectedEmail(email)}
-                        />}
+                        />
                     </div>
 
                     {/* Email panel */}
                     <div className="col-span-3 h-full">
-                        {selectedEmail != null && <EmailPanel email={selectedEmail} />}
+                        {selectedEmail != null && <EmailPanel
+                            updateEmailList={() => setUpdateNum(prevState => prevState + 1)}
+                            email={selectedEmail}
+                            uuid={Cookies.get('uuid')}
+                            selectedFolder={selectedFolder}
+                            setSelectedEmail={setSelectedEmail}
+                        />}
                     </div>
                 </div>
             </div>

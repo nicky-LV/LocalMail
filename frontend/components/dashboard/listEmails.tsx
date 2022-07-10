@@ -1,19 +1,26 @@
 import {Email, FolderName} from "../../types";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import {getFolderEmails} from "../../utils";
 
 interface ListEmailsProps {
-    emails: Email[],
     folder: FolderName,
-    setSelectedEmail: (email: Email) => void
+    setSelectedEmail: (email: Email) => void,
+    uuid: string
 }
 
 export default function ListEmails(props: ListEmailsProps){
     const [selected, setSelected] = useState<number | null>(null)
+    const [emails, setEmails] = useState<Email[] | null>(null);
+
+    useEffect(() => {
+        setEmails(getFolderEmails(props.uuid, props.folder))
+    }, [])
+
     return (
         <>
             <ul role="list" className="divide-y divide-gray-200 h-screen overflow-y-scroll" >
-                {props.emails.map((email) => (
+                {emails && emails.map((email) => (
                     <li key={email.id}
                         onClick={() => setSelected(email.id)}
                         className="h-14 flex flex-row items-center justify-between p-4"
