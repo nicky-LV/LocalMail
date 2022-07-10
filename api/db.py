@@ -8,7 +8,7 @@ from sqlalchemy import event
 
 if int(os.environ['TEST_DB']) == 0:
     engine = create_engine(f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}",
-                       echo=True, future=True)
+                           future=True)
 
     Base = declarative_base(bind=engine)
     session = Session(engine)
