@@ -1,5 +1,5 @@
 import jose.jwt
-from fastapi import FastAPI, HTTPException, Response, Depends, Request
+from fastapi import FastAPI, HTTPException, Response, Depends, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_models import *
@@ -107,7 +107,7 @@ def login(user: LogInUser, response: Response):
 
 
 @app.get('/getEmails/{user_id}')
-def get_emails(user_id: str, token: str = Depends(access_token)):
+def get_emails(user_id: str, background_tasks: BackgroundTasks, token: str = Depends(access_token)):
     try:
         decoded_access_token = decode(token=token, key=os.environ['SECRET_KEY'], subject=user_id)
         if user_id == decoded_access_token['sub']:
@@ -116,7 +116,9 @@ def get_emails(user_id: str, token: str = Depends(access_token)):
                 user = session.query(Users).filter(Users.uuid == user_id).scalar()
                 emails = user.emails
 
-                print(emails)
+                # Delete emails after response has been returned
+                background_tasks.add_task(delete_emails, [email.id for email in emails])
+
                 return [
                     Email(id=db_email.id,
                           subject=db_email.subject,
@@ -126,7 +128,6 @@ def get_emails(user_id: str, token: str = Depends(access_token)):
                           datetime=db_email.datetime.utcnow().isoformat() + 'Z').dict()
                     for db_email in emails
                 ]
-
 
         else:
             return Response(status_code=400, content=f'User does not match token sub')
