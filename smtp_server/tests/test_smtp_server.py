@@ -1,7 +1,6 @@
 import os
 import pytest
-import smtplib
-from smtplib import SMTPException
+from smtplib import SMTP, SMTPException
 from email.message import EmailMessage
 from ..main import controller
 from ..utils import *
@@ -10,7 +9,7 @@ from ..utils import *
 @pytest.fixture
 def smtp():
     try:
-        engine = smtplib.SMTP(host=controller.hostname, port=controller.port)
+        engine = SMTP(host=controller.hostname, port=controller.port)
         return engine
 
     except SMTPException as e:
@@ -57,3 +56,14 @@ def test_send_mail_body(smtp):
     assert get_body_from_email(email.as_string()) == f"This is the body of the email. MIME-type of email: {email.get_content_type()}"
     response = smtp.send_message(email)
     assert response == {}
+
+
+def test_email_forwarding():
+    smtp = SMTP(host='nginx_proxy', port=25)
+    email = EmailMessage()
+    email['To'] = 'test@test.com'
+    email['From'] = 'test@test.com'
+    email['Subject'] = 'test_email_forwarding'
+    # Set body
+    email.set_content(f"This is the body of the email. MIME-type of email: {email.get_content_type()}")
+    smtp.send_message(email)

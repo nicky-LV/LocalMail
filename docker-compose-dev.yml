@@ -2,6 +2,20 @@ version: '3.3'
 
 services:
 
+  nginx_proxy:
+    image: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+
+    ports:
+      - "80:80"
+      - "25:25"
+
+    depends_on:
+      - smtp_server
+      - api
+
+
   test_postgres:
     image: postgres
     ports:
@@ -74,3 +88,6 @@ services:
       - TEST_DB=1
     depends_on:
       - postgres
+
+    ports:
+      - "8025:8025"

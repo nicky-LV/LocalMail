@@ -21,6 +21,7 @@ class ExampleHandler:
     async def handle_DATA(self, server, session_, envelope):
         subject = get_subject_from_email(envelope.content.decode('utf8'))
         body = get_body_from_email(envelope.content.decode('utf8'))
+        print(f"Email received: {subject}")
         recipients = envelope.rcpt_tos
 
         response = requests.post(url=f'http://api:8000/saveEmail', json={
