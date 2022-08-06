@@ -3,8 +3,9 @@ import os
 from sqlalchemy.orm import declarative_base, relationship, Session
 from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, DateTime, delete
 from sqlalchemy.engine import create_engine
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import event
+from sqlalchemy.dialects.postgresql import UUID, ENUM
+from sqlalchemy import event, Enum
+
 
 if int(os.environ['TEST_DB']) == 0:
     engine = create_engine(f"postgresql://{os.environ['POSTGRES_USERNAME']}:{os.environ['POSTGRES_PASSWORD']}@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}",
@@ -45,6 +46,7 @@ class Emails(Base):
     body = Column(String, nullable=True)
     retrieved = Column(Boolean, nullable=False, default=False)
     datetime = Column(DateTime, nullable=False, default=datetime.datetime.utcnow())
+    folder = Column(ENUM("Inbox", "Archived", "Trash", name='folder_enum'), nullable=False, default="Inbox")
 
     recipients = relationship('Users', secondary='user_emails', back_populates='emails')
 
@@ -58,8 +60,3 @@ class UserEmails(Base):
     id = Column(Integer, primary_key=True)
     user_uuid = Column(UUID(as_uuid=False), ForeignKey('users.uuid'))
     emails_id = Column(Integer, ForeignKey('emails.id'))
-
-
-# Create tables if they don't exist
-if not Base.metadata.tables and not os.environ['TEST_DB']:
-    Base.metadata.create_all(engine)

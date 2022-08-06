@@ -1,8 +1,8 @@
-"""as_uuid=False on uuid col of Users
+"""ENUM name
 
-Revision ID: 2351ccf1545f
-Revises: b51db325c689
-Create Date: 2022-07-05 17:51:16.014126
+Revision ID: a85ff44cb838
+Revises: e2ede5ea27cd
+Create Date: 2022-07-26 23:04:13.246591
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '2351ccf1545f'
-down_revision = 'b51db325c689'
+revision = 'a85ff44cb838'
+down_revision = 'e2ede5ea27cd'
 branch_labels = None
 depends_on = None
 
@@ -25,6 +25,7 @@ def upgrade() -> None:
     sa.Column('body', sa.String(), nullable=True),
     sa.Column('retrieved', sa.Boolean(), nullable=False),
     sa.Column('datetime', sa.DateTime(), nullable=False),
+    sa.Column('folder', postgresql.ENUM('Inbox', 'Archived', 'Trash', name='folder_enum'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('users',

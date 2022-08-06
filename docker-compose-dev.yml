@@ -54,7 +54,7 @@ services:
 
   api:
     build: api
-    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: bash -c "python -u db.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - ./api:/app
     ports:
@@ -81,6 +81,8 @@ services:
 
     command: bash -c "python -u main.py"
     environment:
+      - MAIL_PROXY=nginx_proxy
+      - MAIL_PORT=25
       - DOMAIN=test
       - TLD=com
       - SMTP_HOST=0.0.0.0

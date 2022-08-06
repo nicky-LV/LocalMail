@@ -7,7 +7,7 @@ from db import Users, Emails, UserEmails, engine
 from utils import *
 from sqlalchemy import and_
 from jose.jwt import decode
-from jose.exceptions import ExpiredSignatureError
+from jose.exceptions import JWTClaimsError
 import uuid
 
 # todo: update requirements.txt with ONLY the dependencies that this service needs.
@@ -116,18 +116,23 @@ def get_emails(user_id: str, background_tasks: BackgroundTasks, token: str = Dep
                 user = session.query(Users).filter(Users.uuid == user_id).scalar()
                 emails = user.emails
 
-                # Delete emails after response has been returned
                 background_tasks.add_task(delete_emails, [email.id for email in emails])
 
-                return [
-                    Email(id=db_email.id,
-                          subject=db_email.subject,
-                          body=db_email.body,
-                          sender=db_email.sender,
-                          recipients=[user.email_address for user in db_email.recipients],
-                          datetime=db_email.datetime.utcnow().isoformat() + 'Z').dict()
-                    for db_email in emails
-                ]
+                return {
+                    'email_address': user.email_address,
+                    'data': [Email(
+                        id=db_email.id,
+                        subject=db_email.subject,
+                        body=db_email.body,
+                        sender=db_email.sender,
+                        recipients=[user.email_address for user in db_email.recipients],
+                        datetime=db_email.datetime.utcnow().isoformat() + 'Z',
+                        folder=db_email.folder
+                    ).dict()
+                    for db_email in emails]
+                }
+
+
 
         else:
             return Response(status_code=400, content=f'User does not match token sub')
@@ -139,6 +144,7 @@ def get_emails(user_id: str, background_tasks: BackgroundTasks, token: str = Dep
 @app.post('/saveEmail')
 def save_email(email: Email):
     db_email = Emails(subject=email.subject, body=email.body, sender=email.sender)
+    num_recipients = 0
 
     # Check for recipients that are users and add them to the email
     with Session(engine) as session:
@@ -147,8 +153,33 @@ def save_email(email: Email):
 
             if db_user:
                 db_email.recipients.append(db_user)
+                num_recipients += 1
 
-        session.add(db_email)
-        session.commit()
+        # Save email if sent to any valid users.
+        if num_recipients > 0:
+            session.add(db_email)
+            session.commit()
 
     return Response(status_code=200)
+
+
+@app.post('/syncEmails/{user_id}')
+def sync_emails(user_id: str, emails: List[API_EMAIL], token: str = Depends(access_token)):
+    try:
+        decoded_access_token = decode(token=token, key=os.environ['SECRET_KEY'], subject=user_id)
+
+        # user_id matches the token subject
+        if user_id == decoded_access_token['sub']:
+            if user_exists(user_id):
+                # Save emails to user's account
+                save_emails(user_uuid=user_id, emails=emails)
+                return Response(status_code=200)
+
+            else:
+                raise HTTPException(status_code=400, detail='User does not exist')
+
+    except JWTClaimsError:
+        raise HTTPException(status_code=400, detail='Mismatching uuids')
+
+    except Exception:
+        raise HTTPException(status_code=500)

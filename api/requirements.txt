@@ -1,17 +1,7 @@
-fastapi==0.78.0
-uvicorn==0.18.2
-pydantic==1.9.1
-passlib==1.7.4
-SQLAlchemy==1.4.37
-alembic==1.8.0
-cryptography==37.0.2
-python-jose==3.3.0
-psycopg2-binary==2.9.3
-pytest==7.1.2
-requests==2.27.1
 alembic==1.8.0
 anyio==3.6.1
 attrs==21.4.0
+bleach==5.0.1
 certifi==2022.6.15
 cffi==1.15.1
 charset-normalizer==2.0.12
@@ -46,3 +36,4 @@ tomli==2.0.1
 typing_extensions==4.3.0
 urllib3==1.26.9
 uvicorn==0.18.2
+webencodings==0.5.1

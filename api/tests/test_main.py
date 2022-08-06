@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 from ..main import app
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from ..db import engine, Users
 from ..utils import *
 
@@ -16,7 +17,7 @@ client = TestClient(app)
 
 @pytest.fixture
 def test_user():
-    with Session(engine) as session:
+    with Session(engine, expire_on_commit=False) as session:
         user = session.query(Users).filter(Users.email_address == 'test@test.com').scalar()
         if user:
             return user
@@ -124,3 +125,32 @@ def test_get_emails(test_user, test_AT, test_RT):
 
     assert response.status_code == 200
     assert type(response.json()) == list
+
+
+def test_sync_emails(test_user, test_AT, test_RT):
+    # Create test emails
+    email_1: Email = Email(subject='test_sync_emails_1', sender='test@test.com', recipients=['test@test.com'])
+    email_2: Email = Email(subject='test_sync_emails_2', sender='test@test.com', recipients=['test@test.com'])
+
+    response = client.post(f'/syncEmails/{test_user.uuid}',
+                           json=[email_1.dict(), email_2.dict()],
+                           headers={
+                               'Authorization': f'Bearer {test_AT}',
+                               'refresh_token': test_RT
+                           })
+
+    assert response.status_code == 200
+
+    with Session(engine) as session:
+        # Check that emails have been synced
+        assert session.query(Emails).filter(Emails.subject == 'test_sync_emails_1').scalar() is not None
+        assert session.query(Emails).filter(Emails.subject == 'test_sync_emails_2').scalar() is not None
+
+        # Remove emails
+        session.delete(session.query(Emails).filter(Emails.subject == 'test_sync_emails_1').scalar())
+        session.delete(session.query(Emails).filter(Emails.subject == 'test_sync_emails_2').scalar())
+        session.commit()
+
+        assert session.query(Emails).filter(Emails.subject == 'test_sync_emails_1').scalar() is None
+        assert session.query(Emails).filter(Emails.subject == 'test_sync_emails_2').scalar() is None
+        assert session.query(Users).filter(Users.uuid == test_user.uuid).scalar() is not None

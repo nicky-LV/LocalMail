@@ -23,12 +23,22 @@ export interface User {
 }
 
 export interface Email {
-    id: number,
+    id: number | null,
     subject: string,
     sender: string,
     recipients: string[]
     body: string,
     datetime: string
+}
+
+export interface API_EMAIL {
+    id: number,
+    subject: string | null,
+    sender: string,
+    recipients: string[],
+    body: string | null,
+    datetime: string,
+    folder: FolderName
 }
 
 export enum LoginField {
@@ -52,4 +62,10 @@ export interface DashboardError {
         error: DashboardErrorType,
         message: string
     }
+}
+
+export enum ScreenEnum {
+    BACKUP_SCREEN,
+    SEND_SCREEN,
+    DASHBOARD
 }

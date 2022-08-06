@@ -1,12 +1,12 @@
 import re
 import os
+import bleach
 from pydantic import BaseModel, validator
 from passlib.hash import sha256_crypt
 from fastapi import HTTPException
 from typing import List
 from sqlalchemy.orm import Session
 from db import engine, Users
-from utils import verify_password
 
 
 class User(BaseModel):
@@ -70,7 +70,7 @@ class LogInUser(User):
             u: Users = session.query(Users).filter(Users.email_address == values['email_address']).scalar()
 
             if u is not None:
-                if verify_password(password=v, hashed_password=u.password):
+                if sha256_crypt.verify(v, u.password):
                     return v
 
                 else:
@@ -86,14 +86,33 @@ class LogInUser(User):
                 })
 
 
-class Email(BaseModel):
-    id: int | None
+class EmailBase(BaseModel):
+    """ Email base (represents INCOMING email) """
     subject: str | None
     body: str | None
     recipients: List[str]
     sender: str
     datetime: str | None
+    folder: str | None
+
+
+class Email(EmailBase):
+    id: int | None
 
     class Config:
         orm_mode = True
 
+
+class API_EMAIL(EmailBase):
+    """ Represents Email objects sent from client / API.
+    API_EMAIL objects are REQUIRED to have an ID.
+    """
+    id: int
+
+    @validator('body')
+    def sanitise_html(cls, v):
+        """ Sanitize user-inputted HTML to prevent XSS attacks """
+        if v:
+            return bleach.clean(v)
+
+        return v
