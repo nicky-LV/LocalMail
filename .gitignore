@@ -4,3 +4,4 @@ smtp_server/.pytest_cache
 api/.pytest_cache
 frontend/node_modules
 ./docker-compose-dev.yml
+./db_data
