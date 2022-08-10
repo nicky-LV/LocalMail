@@ -35,7 +35,10 @@ export default function Folders(props: FoldersProps){
                 <li key={folder.name}
                     onMouseEnter={() => setHovered(folder.name)}
                     onMouseLeave={() => setHovered(null)}
-                    onClick={() => props.setSelectedFolder(folder.name)}
+                    onClick={() => {
+                        props.clearSelectedEmail()
+                        props.setSelectedFolder(folder.name)
+                    }}
                     className="h-14"
                 >
                     <button onClick={(e) => {

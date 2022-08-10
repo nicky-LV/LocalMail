@@ -26,6 +26,8 @@ else:
 class Users(Base):
     __tablename__ = 'users'
     uuid = Column(UUID(as_uuid=False), nullable=False, primary_key=True)
+    firstname = Column(String(40), nullable=False, default="")
+    surname = Column(String(40), nullable=False, default="")
     email_address = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     disabled = Column(Boolean, nullable=False, default=False)
@@ -47,6 +49,8 @@ class Emails(Base):
     retrieved = Column(Boolean, nullable=False, default=False)
     datetime = Column(DateTime, nullable=False, default=datetime.datetime.utcnow())
     folder = Column(ENUM("Inbox", "Archived", "Trash", name='folder_enum'), nullable=False, default="Inbox")
+    # Specifies if email is a backup or not
+    backup = Column(Boolean, nullable=False, default=False)
 
     recipients = relationship('Users', secondary='user_emails', back_populates='emails')
 

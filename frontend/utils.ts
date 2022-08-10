@@ -107,3 +107,37 @@ export function moveEmail(uuid: string, email: API_EMAIL, fromFolder: FolderName
         throw Error(`Email with ID ${email.id} could not be found in folder ${fromFolder}`)
     }
 }
+
+interface sortEmailsByFolderReturnType {
+    inboxEmails: API_EMAIL[],
+    archivedEmails: API_EMAIL[],
+    trashedEmails: API_EMAIL[]
+}
+
+export function sortEmailsByFolder(emails: API_EMAIL[]): sortEmailsByFolderReturnType {
+    let inboxEmails: API_EMAIL[] = []
+    let archivedEmails: API_EMAIL[] = []
+    let trashedEmails: API_EMAIL[] = []
+
+    emails.forEach((email: API_EMAIL) => {
+        switch (email.folder){
+            case FolderName.INBOX:
+                inboxEmails.push(email)
+                break;
+
+            case FolderName.ARCHIVED:
+                archivedEmails.push(email)
+                break;
+
+            case FolderName.TRASH:
+                trashedEmails.push(email)
+                break;
+        }
+    })
+
+    return {
+        "inboxEmails": inboxEmails,
+        "archivedEmails": archivedEmails,
+        "trashedEmails": trashedEmails
+    }
+}

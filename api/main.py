@@ -107,32 +107,34 @@ def login(user: LogInUser, response: Response):
 
 
 @app.get('/getEmails/{user_id}')
-def get_emails(user_id: str, background_tasks: BackgroundTasks, token: str = Depends(access_token)):
+def get_emails(user_id: str, background_tasks: BackgroundTasks, token: str = Depends(access_token), backup: bool = False):
     try:
         decoded_access_token = decode(token=token, key=os.environ['SECRET_KEY'], subject=user_id)
         if user_id == decoded_access_token['sub']:
             # Retrieve user's emails
             with Session(engine) as session:
+                # retrieve emails linked to users account, filter by backup attribute
                 user = session.query(Users).filter(Users.uuid == user_id).scalar()
-                emails = user.emails
+                emails = session.query(Emails).filter(Users.uuid == user_id, Emails.backup == backup)
 
+                # todo: will this task run if a non-200 response is returned?
                 background_tasks.add_task(delete_emails, [email.id for email in emails])
 
                 return {
+                    'name': f'{user.firstname} {user.surname}',
                     'email_address': user.email_address,
-                    'data': [Email(
+                    'data': [API_EMAIL(
                         id=db_email.id,
                         subject=db_email.subject,
                         body=db_email.body,
                         sender=db_email.sender,
                         recipients=[user.email_address for user in db_email.recipients],
                         datetime=db_email.datetime.utcnow().isoformat() + 'Z',
-                        folder=db_email.folder
+                        folder=db_email.folder,
+                        backup=db_email.backup
                     ).dict()
                     for db_email in emails]
                 }
-
-
 
         else:
             return Response(status_code=400, content=f'User does not match token sub')
@@ -143,6 +145,7 @@ def get_emails(user_id: str, background_tasks: BackgroundTasks, token: str = Dep
 
 @app.post('/saveEmail')
 def save_email(email: Email):
+    """ API endpoint to save email(s) from SMTP Server container """
     db_email = Emails(subject=email.subject, body=email.body, sender=email.sender)
     num_recipients = 0
 
@@ -163,8 +166,8 @@ def save_email(email: Email):
     return Response(status_code=200)
 
 
-@app.post('/syncEmails/{user_id}')
-def sync_emails(user_id: str, emails: List[API_EMAIL], token: str = Depends(access_token)):
+@app.post('/backup/{user_id}')
+def backup_emails(user_id: str, emails: List[API_EMAIL], token: str = Depends(access_token)):
     try:
         decoded_access_token = decode(token=token, key=os.environ['SECRET_KEY'], subject=user_id)
 
@@ -172,7 +175,7 @@ def sync_emails(user_id: str, emails: List[API_EMAIL], token: str = Depends(acce
         if user_id == decoded_access_token['sub']:
             if user_exists(user_id):
                 # Save emails to user's account
-                save_emails(user_uuid=user_id, emails=emails)
+                save_emails(user_uuid=user_id, emails=emails, backup=True)
                 return Response(status_code=200)
 
             else:

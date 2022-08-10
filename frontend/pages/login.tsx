@@ -23,7 +23,7 @@ export default function Login(props: object){
         Cookies.set('refresh_token', data.refresh_token)
 
         // Refresh to dashboard
-        Router.push('/dashboard')
+        Router.push('/newDash')
       }
     }).catch(e => {
       if (e.response.status === 400){

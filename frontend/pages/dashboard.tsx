@@ -6,12 +6,12 @@ import {useEffect, useState} from "react";
 import {API_EMAIL, Email, FolderName, ScreenEnum} from "../types";
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import EmailPanel from "../components/dashboard/emailPanel";
+import ShowEmail from "../components/dashboard/showEmailScreen/showEmail";
 import {updateFolderEmails} from "../utils";
 import AuthRequired from "../components/authRequired";
 import {useRouter} from "next/router";
 import {AnimatePresence, motion} from "framer-motion";
-import SyncPage from "../components/dashboard/sync/syncPage";
+import BackupScreen from "../components/dashboard/backupDownloadScreen/backupScreen";
 
 interface DashboardProps {
     emails: Email[],
@@ -185,7 +185,7 @@ function Dashboard(props: DashboardProps){
                                         id='col-3'
                                         variants={fadeInVariant}
                                     >
-                                        <EmailPanel
+                                        <ShowEmail
                                             updateEmailList={() => setUpdateNum(prevState => prevState + 1)}
                                             email={selectedEmail}
                                             uuid={Cookies.get('uuid')}
@@ -196,7 +196,7 @@ function Dashboard(props: DashboardProps){
                                 </div>
                             </motion.div>}
 
-                            {screen === ScreenEnum.BACKUP_SCREEN && <SyncPage setScreen={(screen: ScreenEnum) => setScreen(screen)} uuid={props.uuid} />}
+                            {screen === ScreenEnum.BACKUP_SCREEN && <BackupScreen setScreen={(screen: ScreenEnum) => setScreen(screen)} uuid={props.uuid} />}
 
                         </AnimatePresence>
                     </section>

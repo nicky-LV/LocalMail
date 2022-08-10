@@ -108,6 +108,7 @@ class API_EMAIL(EmailBase):
     API_EMAIL objects are REQUIRED to have an ID.
     """
     id: int
+    backup: bool
 
     @validator('body')
     def sanitise_html(cls, v):

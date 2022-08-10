@@ -1,4 +1,5 @@
 import {IconProp} from "@fortawesome/fontawesome-svg-core";
+import {ReactComponentElement} from "react";
 
 export interface LoggedInUser {
     uuid: string
@@ -68,4 +69,12 @@ export enum ScreenEnum {
     BACKUP_SCREEN,
     SEND_SCREEN,
     DASHBOARD
+}
+
+// todo: create more strict type for onClick
+export interface EmailActionFolder {
+    folderName: FolderName,
+    icon: any,
+    text: string,
+    onClick: any
 }

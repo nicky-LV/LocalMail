@@ -142,7 +142,7 @@ def delete_emails(email_ids: List[int]) -> None:
         session.commit()
 
 
-def save_emails(user_uuid: str, emails: List[API_EMAIL]):
+def save_emails(user_uuid: str, emails: List[API_EMAIL], backup: bool = False):
     """ Save email(s) to a User """
     with Session(engine) as session:
         user = session.query(Users).filter(Users.uuid == user_uuid).scalar()
@@ -155,7 +155,7 @@ def save_emails(user_uuid: str, emails: List[API_EMAIL]):
 
                 else:
                     db_email = Emails(id=email.id, subject=email.subject, sender=email.sender, body=email.body,
-                                      retrieved=False, folder=email.folder)
+                                      retrieved=False, folder=email.folder, backup=backup)
                     session.add(db_email)
                     user.emails.append(db_email)
                     session.commit()
