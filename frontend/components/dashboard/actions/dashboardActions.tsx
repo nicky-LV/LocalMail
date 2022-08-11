@@ -1,11 +1,11 @@
 import {ArrowRightIcon, CloudDownloadIcon, CloudUploadIcon, LogoutIcon, SupportIcon} from "@heroicons/react/outline";
-import {ScreenEnum} from "../../types";
+import {ScreenEnum} from "../../../types";
 
 interface actionsProps {
     setScreen: (screen: ScreenEnum) => any
 }
 
-export default function Actions(props: actionsProps){
+export default function DashboardActions(props: actionsProps){
     const actions = [
         {
             title: "Send an email",
