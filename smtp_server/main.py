@@ -34,7 +34,7 @@ class ExampleHandler:
         })
 
         assert response.status_code == 200
-        return '250 Message accepted for delivery'
+        return '250'
 
 
 controller = Controller(ExampleHandler(), hostname=os.environ.get('SMTP_HOST'), port=int(os.environ.get('SMTP_PORT')))
