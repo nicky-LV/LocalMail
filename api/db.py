@@ -64,3 +64,7 @@ class UserEmails(Base):
     id = Column(Integer, primary_key=True)
     user_uuid = Column(UUID(as_uuid=False), ForeignKey('users.uuid'))
     emails_id = Column(Integer, ForeignKey('emails.id'))
+
+
+# Create tables
+Base.metadata.create_all(bind=engine)
