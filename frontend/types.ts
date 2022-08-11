@@ -1,5 +1,4 @@
 import {IconProp} from "@fortawesome/fontawesome-svg-core";
-import {ReactComponentElement} from "react";
 
 export interface LoggedInUser {
     uuid: string
@@ -10,7 +9,8 @@ export interface LoggedInUser {
 export enum FolderName {
     INBOX = "Inbox",
     ARCHIVED = "Archived",
-    TRASH = "Trash"
+    TRASH = "Trash",
+    SPAM = "Spam"
 }
 
 export interface Folder {

@@ -1,11 +1,11 @@
 import {Fragment, useEffect, useState} from 'react'
 import {Menu, Popover, Transition} from '@headlessui/react'
-import {BellIcon, MenuIcon, XIcon} from '@heroicons/react/outline'
+import {BellIcon, MenuIcon, RefreshIcon, XIcon} from '@heroicons/react/outline'
 import {SearchIcon} from '@heroicons/react/solid'
 import {API_EMAIL, FolderName, ScreenEnum} from "../types";
 import ListEmails from "../components/dashboard/listEmails";
 import Cookies from 'js-cookie';
-import Actions from "../components/dashboard/actions";
+import DashboardActions from "../components/dashboard/actions/dashboardActions";
 import {AnimatePresence, motion} from "framer-motion";
 import AuthRequired from "../components/authRequired";
 import BackupScreen from "../components/dashboard/backupDownloadScreen/backupScreen";
@@ -13,7 +13,7 @@ import {useRouter} from "next/router";
 import axios from "axios";
 import {sortEmailsByFolder, updateFolderEmails} from "../utils";
 import ShowEmail from "../components/dashboard/showEmailScreen/showEmail";
-import ProfileDropdown from "../components/dashboard/profileDropdown";
+import CheckedEmailsActions from "../components/dashboard/actions/checkedEmailsActions";
 
 const user = {
     name: 'Tom Cook',
@@ -31,6 +31,7 @@ const fadeInVariant = {
 const folders = [
     FolderName.INBOX,
     FolderName.ARCHIVED,
+    FolderName.SPAM,
     FolderName.TRASH
 ]
 
@@ -48,12 +49,19 @@ export default function AuthDashboard(props: any){
 }
 
 function NewDash(props: any) {
+    // Current folder
     const [selectedFolder, setSelectedFolder] = useState<FolderName>(FolderName.INBOX);
-    const [selectedEmail, setSelectedEmail] = useState<API_EMAIL | null>(null);
+    // Current opened email
+    const [openedEmail, setOpenedEmail] = useState<API_EMAIL | null>(null);
+    // Emails that have been checked. Array of email IDs.
+    const [selectedEmails, selectEmail] = useState<number[]>([]);
+    // Screen that the dashboard should display
     const [screen, setScreen] = useState<ScreenEnum>(ScreenEnum.DASHBOARD);
+    // Name & email address of user
     const [userName, setUserName] = useState<string>("");
     const [emailAddress, setEmailAddress] = useState<string>("");
-    const [showProfileDropdown, setShowProfileDropdown] = useState<string>(false);
+    // counterDep
+    const [counterDep, setCounterDep] = useState<number>(0);
 
     const router = useRouter();
 
@@ -91,15 +99,19 @@ function NewDash(props: any) {
             console.log(e)
             router.push('/login')
         }
-    }, [])
+    }, [counterDep])
+
+    function resetSelectedEmails(){
+        selectEmail(() => [])
+    }
 
     return (
         <>
-            <div className="flex flex-col h-screen">
-                <Popover as="header" className="pb-24 bg-gray-800">
+            <div className="flex flex-col h-screen pb-8 overflow-hidden">
+                <Popover as="header" className="bg-gray-800">
                     {({ open }) => (
                         <>
-                            <div className="max-w-3xl flex-grow mx-auto px-4 sm:px-6 lg:max-w-7xl lg:px-8">
+                            <div className="max-w-3xl h-full mx-auto px-4 sm:px-6 lg:max-w-7xl lg:px-8">
                                 <div className="relative py-5 flex items-center justify-center lg:justify-between">
                                     {/* Logo */}
                                     <div className="absolute left-0 flex-shrink-0 lg:static">
@@ -166,8 +178,9 @@ function NewDash(props: any) {
                                                         href={"#"}
                                                         onClick={(e) => {
                                                             e.preventDefault();
+                                                            resetSelectedEmails()
                                                             setSelectedFolder(folder);
-                                                            setSelectedEmail(null);
+                                                            setOpenedEmail(null);
                                                         }}
                                                         className={`${selectedFolder === folder ? 'text-white' : 'text-gray-300'} text-sm font-medium rounded-md bg-white bg-opacity-0 px-3 py-2 hover:bg-opacity-10`}
                                                     >
@@ -266,7 +279,7 @@ function NewDash(props: any) {
                         </>
                     )}
                 </Popover>
-                <main className="bg-gray-800 -mt-24 pb-8 flex-grow">
+                <main className="bg-gray-800 pb-8">
                     <div className="max-w-3xl mx-auto px-4 h-full sm:px-6 lg:max-w-7xl lg:px-8">
                         <h1 className="sr-only">Page title</h1>
                         {/* Main 3 column grid */}
@@ -279,29 +292,58 @@ function NewDash(props: any) {
                                     </h2>
 
                                     {/* Content */}
-                                    <div className="rounded-lg bg-white overflow-hidden shadow h-full p-6">
+                                    <div className="rounded-lg bg-white shadow h-full p-6">
                                         <AnimatePresence exitBeforeEnter>
-                                            {screen === ScreenEnum.DASHBOARD && !selectedEmail && <motion.div
+                                            {screen === ScreenEnum.DASHBOARD && !openedEmail && <motion.div
                                                 initial="initial"
                                                 animate="animate"
                                                 exit="exit"
                                                 variants={fadeInVariant}
                                                 className="flex flex-col gap-3 h-full">
-                                                <h1 className="text-4xl font-bold text-black">{selectedFolder}</h1>
+                                                <div className="flex flex-row justify-between">
+
+                                                    <div className="flex flex-row gap-3 items-center justify-start">
+                                                        {/* Selected folder */}
+                                                        <h1 className="text-4xl font-bold text-black">{selectedFolder}</h1>
+
+                                                        {/* Refresh inbox */}
+                                                        {/* todo: spin when clicked */}
+                                                        <button className="mt-2" onClick={() => setCounterDep((prevState) => prevState + 1)}>
+                                                            <RefreshIcon className="h-5 w-5 text-gray-500 hover:text-gray-800" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* DashboardActions for checked emails */}
+                                                    {selectedEmails.length > 0 && <CheckedEmailsActions
+                                                        uuid={props.uuid}
+                                                        selectedFolder={selectedFolder} />
+                                                    }
+                                                </div>
                                                 <ListEmails
                                                     key={selectedFolder}
                                                     folder={selectedFolder}
                                                     uuid={Cookies.get('uuid')}
-                                                    setSelectedEmail={(email: API_EMAIL) => setSelectedEmail(email)}
+                                                    setOpenedEmail={(email: API_EMAIL) => setOpenedEmail(email)}
+                                                    selectEmail={(emailId: number) => selectEmail((prevState) => prevState.concat(emailId))}
+                                                    deselectEmail={(emailId: number) => selectEmail((prevState) => prevState.filter((value) => value !== emailId))}
                                                 />
                                             </motion.div>}
 
-                                            {screen === ScreenEnum.DASHBOARD && selectedEmail && <ShowEmail
-                                                email={selectedEmail}
-                                                uuid={props.uuid}
-                                                selectedFolder={selectedFolder}
-                                                setSelectedEmail={setSelectedEmail}
-                                            />}
+                                            {screen === ScreenEnum.DASHBOARD && openedEmail &&
+                                                <motion.div
+                                                    className="h-full"
+                                                    initial="initial"
+                                                    animate="animate"
+                                                    exit="exit"
+                                                    variants={fadeInVariant}
+                                                >
+                                                    <ShowEmail
+                                                        email={openedEmail}
+                                                        uuid={props.uuid}
+                                                        selectedFolder={selectedFolder}
+                                                        setSelectedEmail={setOpenedEmail}
+                                                    />
+                                                </motion.div>}
 
                                             {screen === ScreenEnum.BACKUP_SCREEN && <BackupScreen setScreen={(screen) => setScreen(screen)} uuid={props.uuid} />}
                                         </AnimatePresence>
@@ -317,7 +359,7 @@ function NewDash(props: any) {
                                     </h2>
                                     <div className="rounded-lg bg-white overflow-hidden shadow">
                                         <div>
-                                            <Actions setScreen={(screen: ScreenEnum) => setScreen(screen)} />
+                                            <DashboardActions setScreen={(screen: ScreenEnum) => setScreen(screen)} />
                                         </div>
                                     </div>
                                 </section>
@@ -325,14 +367,6 @@ function NewDash(props: any) {
                         </div>
                     </div>
                 </main>
-                <footer>
-                    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 lg:max-w-7xl">
-                        <div className="border-t border-gray-200 py-8 text-sm text-gray-500 text-center sm:text-left">
-                            <span className="block sm:inline">&copy; 2021 Tailwind Labs Inc.</span>{' '}
-                            <span className="block sm:inline">All rights reserved.</span>
-                        </div>
-                    </div>
-                </footer>
             </div>
         </>
     )
