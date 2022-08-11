@@ -70,19 +70,12 @@ def test_email_forwarding(smtp):
     smtp.send_message(email)
 
 
-def test_email_html(smtp):
+def test_html_email(smtp):
     """ Send email with HTML body """
     email = EmailMessage()
     email['To'] = 'test@test.com'
     email['From'] = 'test@test.com'
-    email['Subject'] = 'HTML email'
+    email['Subject'] = 'test_html_email'
     # Set HTML body
-    email.set_content(f"""
-    <div>
-    <h1>Test</h1>
-    <p style="color:red;">Test</p>
-    <script>alert('XSS vulnerability')</script>
-    <p>MIME-type: {email.get_content_type()}</p>
-    </div>
-    """)
+    email.set_content(f"""<div><h1>Test</h1><p style="color:red;">Test</p><script>alert("XSS attack")</script>)</div>""")
     smtp.send_message(email)
