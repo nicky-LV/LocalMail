@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from typing import List
 from sqlalchemy.orm import Session
 from db import engine, Users
+from bleach.css_sanitizer import CSSSanitizer
 
 
 class User(BaseModel):
@@ -113,7 +114,11 @@ class API_EMAIL(EmailBase):
     @validator('body')
     def sanitise_html(cls, v):
         """ Sanitize user-inputted HTML to prevent XSS attacks """
+        # CSS allowed tags
+        css_sanitizer = CSSSanitizer(allowed_css_properties=bleach.css_sanitizer.ALLOWED_CSS_PROPERTIES)
+        # List of allowed tags
+        allowed_tags = bleach.sanitizer.ALLOWED_TAGS + ['div', 'span', 'p', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
         if v:
-            return bleach.clean(v)
+            return bleach.clean(text=v, tags=allowed_tags, attributes=['class', 'style', 'href', 'title'], css_sanitizer=css_sanitizer)
 
         return v
